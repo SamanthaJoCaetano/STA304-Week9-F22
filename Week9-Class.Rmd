@@ -14,6 +14,58 @@ library(broom)
 library(tidyverse)
 ```
 
+# MICE Example
+
+Let's look at the starwars data
+
+```{r}
+starwars_data <- starwars
+
+head(starwars_data)
+
+starwars_data %>% summarise(n=n(),
+                            n_missing_hair = sum(is.na(hair_color)),
+                            n_missing_eye = sum(is.na(eye_color)),
+                            n_missing_skin = sum(is.na(skin_color)),
+                            n_birth_year = sum(is.na(birth_year)),
+                            n_height = sum(is.na(height)),
+                            n_mass = sum(is.na(mass)))
+```
+
+
+```{r}
+#install.packages("mice")
+library(mice)
+
+starwars_data_reduced <- starwars_data %>% select(hair_color, height, mass)
+
+init = mice(starwars_data_reduced, maxit=0) 
+meth = init$method
+predM = init$predictorMatrix
+
+#If you want to skip a variable from imputation use the code below. #Keep in mind that this variable will be used for prediction.
+
+meth[c("mass")]=""
+
+# Now let specify the methods for imputing the missing values. There are specific methods for continues, binary and ordinal variables. I set different methods for each variable. You can add more than one variable in each methods.
+
+meth[c("height")]="norm" 
+meth[c("hair_color")]="polyreg"
+
+# Now it is time to run the multiple (m=5) imputation.
+
+set.seed(103)
+imputed = mice(starwars_data_reduced, method=meth, predictorMatrix=predM, m=5)
+
+# Store this as a data set after imputation
+starwars_imputed <- complete(imputed)
+
+```
+
+Note: you could use a test vs training set to check the accuracy of this. But that is for a future lesson/class.
+
+\newpage
+
 # Propensity Score Matching
 
 ## Simulating the data
